@@ -1,6 +1,7 @@
 // Next Thing offline cache. Bump VERSION when files change.
-const VERSION = "next-thing-v3";
-const FILES = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png"];
+const VERSION = "next-thing-v4";
+const FILES = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png",
+  "fonts/ChakraPetch-Regular.woff", "fonts/ChakraPetch-Medium.woff", "fonts/ChakraPetch-SemiBold.woff", "fonts/ChakraPetch-Bold.woff", "fonts/JetBrainsMono.woff"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
 });
