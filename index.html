@@ -483,7 +483,7 @@ input[type=text]:focus,textarea:focus{border-color:var(--pink);box-shadow:0 0 14
         '<div class="field"><span>Due</span>' + seg("a.due", [["today","Today"],["week","This week"],["someday","No date"]], addPrefs.due) + '</div>' +
         '<div class="field"><span>Matters?</span>' + seg("a.star", [["true","★ Yes, it matters"],["false","Normal"]], addPrefs.star, "pinkseg") + '</div>' +
         '<div class="btns"><button class="btn primary" data-act="addgo">Add task</button></div>' +
-        '<p class="hint">The sheet stays open, so you can dump several in a row. Your choices stick between tasks.</p>';
+        '<p class="hint">Your choices stick for the next task you add.</p>';
     } else if (sheet.type === "task") {
       const t = byId(sheet.id); if (!t) { closeSheet(); return; }
       h = head("Edit task") +
@@ -582,7 +582,8 @@ input[type=text]:focus,textarea:focus{border-color:var(--pink);box-shadow:0 0 14
     const inp = $("#addText"); const v = (inp ? inp.value : addPrefs.text).trim();
     if (!v) { inp && inp.focus(); return; }
     mutate(() => S.tasks.push({ id: uid(), t: v, star: addPrefs.star, due: dueFor(addPrefs.due), est: addPrefs.est, slot: addPrefs.slot, status: "todo", created: Date.now() }));
-    addPrefs.text = ""; inp.value = ""; inp.focus();
+    addPrefs.text = "";
+    closeSheet();
     toast("Added: " + v, null);
   }
   function addHabit(){
