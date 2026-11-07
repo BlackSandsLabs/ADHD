@@ -603,7 +603,9 @@ input[type=text]:focus,textarea:focus{border-color:var(--pink);box-shadow:0 0 14
     if (!v) { inp && inp.focus(); return; }
     if (habDraft.freq === "weekly" && !habDraft.days.length) { toast("Pick at least one day.", null); return; }
     mutate(() => S.habits.push({ id: uid(), t: v, kind: habDraft.kind, freq: habDraft.freq, days: habDraft.days.slice(), dom: habDraft.dom, created: Date.now() }));
-    habDraft.t = ""; renderSheet(); const n = $("#habText"); n && n.focus();
+    habDraft.t = "";
+    closeSheet();
+    toast("Added: " + v, null);
   }
 
   document.addEventListener("click", ev => {
