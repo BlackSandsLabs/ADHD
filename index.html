@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Next Thing</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Next Thing">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f1f3f8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e1120" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,750&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f1f3f8; --surface:#ffffff; --ink:#141a2e; --muted:#5b6379; --line:#dce0ea;
+  --accent:#2d4bd6; --accent-ink:#ffffff; --star:#c97d00; --late:#c03d28; --ok:#1d8656;
+  --display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif;
+  --body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  /* layout: one task card front and centre, quick-add pinned to the bottom, the full list tucked away */
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1120; --surface:#181c30; --ink:#eef0f8; --muted:#9ba2ba; --line:#2a3050;
+    --accent:#8299ff; --accent-ink:#0e1120; --star:#f3b53a; --late:#ff7d66; --ok:#52c78f;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1120; --surface:#181c30; --ink:#eef0f8; --muted:#9ba2ba; --line:#2a3050;
+  --accent:#8299ff; --accent-ink:#0e1120; --star:#f3b53a; --late:#ff7d66; --ok:#52c78f;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 var(--body);-webkit-font-smoothing:antialiased}
+.app{max-width:560px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;gap:18px;padding:calc(20px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left))}
+#backup{display:flex;flex-direction:column;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+#backup[hidden]{display:none}
+#backup p{margin:0;font-size:14px;color:var(--muted)}
+#backup textarea{font:13px/1.4 ui-monospace,Menlo,monospace;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;min-height:90px;width:100%;resize:vertical}
+#backup .row{flex-wrap:wrap}
+#backup .row button{flex:1;min-width:120px}
+.headbtn{min-height:36px;padding:4px 12px;border-radius:999px;font-size:13px;color:var(--muted)}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+h1{font-family:var(--display);font-weight:750;font-size:22px;margin:0;letter-spacing:-.01em}
+#tally{color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums}
+#tally b{color:var(--ok);font-weight:600}
+main{flex:1;display:flex;flex-direction:column;gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:24px 22px;display:flex;flex-direction:column;gap:18px;box-shadow:0 18px 40px -26px rgba(20,30,90,.45)}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);display:flex;gap:8px;align-items:center}
+.eyebrow .star{color:var(--star);letter-spacing:0}
+.title{font-family:var(--display);font-weight:750;font-size:clamp(26px,7.2vw,34px);line-height:1.12;letter-spacing:-.015em;margin:0;text-wrap:balance;overflow-wrap:anywhere}
+.parent{color:var(--muted);font-size:14px;margin-top:-10px}
+.why{border-left:3px solid var(--accent);padding:2px 0 2px 12px;color:var(--muted);font-size:15px;margin:0}
+.why.t0{border-color:var(--late)} .why.t1{border-color:var(--late)} .why.star{border-color:var(--star)}
+.nudge{background:color-mix(in srgb,var(--star) 14%,var(--surface));border-radius:12px;padding:10px 12px;font-size:14px;margin:0}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.actions .wide{grid-column:1/-1}
+button{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;min-height:48px;cursor:pointer;transition:transform .08s ease,background .15s ease}
+button:active{transform:scale(.98)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-weight:600;font-size:18px;min-height:56px}
+.linkish{background:none;border:none;color:var(--muted);text-decoration:underline;text-underline-offset:3px;min-height:40px;padding:6px;justify-self:center}
+.stepform{display:flex;flex-direction:column;gap:10px}
+.stepform label{font-size:14px;color:var(--muted)}
+.row{display:flex;gap:8px}
+.row input{flex:1}
+input[type=text]{font:inherit;font-size:16px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:13px 14px;width:100%;min-width:0}
+.empty{text-align:left}
+.empty ol{margin:0;padding-left:20px;color:var(--muted);display:grid;gap:6px}
+.empty ol b{color:var(--ink);font-weight:600}
+#listWrap{display:flex;flex-direction:column;gap:10px}
+#toggleAll{background:none;border:1px dashed var(--line);color:var(--muted);font-size:14px;min-height:44px}
+#all{display:flex;flex-direction:column;gap:6px}
+.group{font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:10px 2px 2px}
+.item{display:grid;grid-template-columns:40px 1fr auto 40px;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px}
+.item .txt{overflow-wrap:anywhere;font-size:15px;padding:6px 2px}
+.item .txt small{display:block;color:var(--muted);font-size:12px}
+.icon{min-height:40px;min-width:40px;padding:0;border:none;background:none;font-size:18px;color:var(--muted)}
+.icon[aria-pressed="true"]{color:var(--star)}
+.chip{font-size:12px;padding:6px 10px;min-height:32px;border-radius:999px;color:var(--muted)}
+.chip.late{color:var(--late);border-color:color-mix(in srgb,var(--late) 40%,var(--line))}
+form#cap{position:sticky;bottom:0;background:var(--bg);padding:12px 0 calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.opts{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px;background:var(--surface)}
+.seg button{border:none;border-radius:999px;min-height:34px;padding:4px 12px;font-size:14px;color:var(--muted);background:none}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+#capStar{border-radius:999px;min-height:40px;padding:4px 14px;font-size:14px;color:var(--muted)}
+#capStar[aria-pressed="true"]{color:var(--star);border-color:var(--star);font-weight:600}
+#capAdd{margin-left:auto;border-radius:999px;min-height:40px;padding:4px 18px;font-size:14px;background:var(--ink);color:var(--bg);border-color:transparent;font-weight:600}
+.hint{font-size:12px;color:var(--muted);margin:0}
+#status{font-size:12px;color:var(--muted);margin:0;min-height:0}
+#toast{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);background:var(--ink);color:var(--bg);border-radius:999px;padding:8px 8px 8px 18px;display:flex;gap:10px;align-items:center;font-size:14px;box-shadow:0 10px 30px -10px rgba(0,0,0,.5);max-width:calc(100% - 32px)}
+#toast[hidden]{display:none}
+#toast button{background:none;border:none;color:var(--bg);font-weight:600;text-decoration:underline;min-height:36px;padding:4px 10px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Next Thing</h1>
+    <span style="display:flex;gap:10px;align-items:center"><span id="tally" aria-live="polite"></span><button type="button" class="headbtn" id="backupBtn" aria-expanded="false">Backup</button></span>
+  </header>
+
+  <section id="backup" hidden>
+    <p id="backupInfo">Your tasks live only on this phone. Save a backup now and then, in case you change phones or the data gets cleared.</p>
+    <div class="row">
+      <button type="button" id="bkSave">Save backup file</button>
+      <button type="button" id="bkCopy">Copy as text</button>
+    </div>
+    <label for="bkText" class="hint">To restore, paste backup text here or pick a backup file.</label>
+    <textarea id="bkText" placeholder="Paste backup text"></textarea>
+    <div class="row">
+      <button type="button" id="bkRestore">Restore from text</button>
+      <button type="button" id="bkFileBtn">Restore from file</button>
+      <input type="file" id="bkFile" accept=".json,application/json,text/plain" hidden>
+    </div>
+  </section>
+
+  <main id="main" aria-live="polite"></main>
+
+  <section id="listWrap">
+    <button type="button" id="toggleAll" aria-expanded="false">See everything</button>
+    <div id="all" hidden></div>
+  </section>
+
+  <p id="status" role="status"></p>
+
+  <form id="cap" autocomplete="off">
+    <label for="capText" class="hint" style="position:absolute;left:-9999px">Add a task</label>
+    <input type="text" id="capText" placeholder="Something on your mind? Add it here" enterkeyhint="done">
+    <div class="opts">
+      <div class="seg" role="group" aria-label="When">
+        <button type="button" data-when="today" aria-pressed="false">Today</button>
+        <button type="button" data-when="week" aria-pressed="true">This week</button>
+        <button type="button" data-when="someday" aria-pressed="false">Someday</button>
+      </div>
+      <button type="button" id="capStar" aria-pressed="false">☆ Matters</button>
+      <button type="submit" id="capAdd">Add</button>
+    </div>
+    <p class="hint">Mark it "Matters" if you'd be genuinely bothered when it didn't happen.</p>
+  </form>
+</div>
+
+<div id="toast" hidden><span id="toastMsg"></span><button type="button" id="toastUndo">Undo</button></div>
+
+<script>
+(function(){
+  const KEY = "nextthing.v1";
+  const $ = s => document.querySelector(s);
+  let S = { tasks: [], log: {} };
+  let capWhen = "week", capStar = false;
+  let stepFor = null, stepDraft = "";
+  let undoSnap = null, toastTimer = null;
+  let showAll = false;
+
+  // ---------- dates ----------
+  const pad = n => String(n).padStart(2, "0");
+  const dayStr = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  const today = () => dayStr(new Date());
+  const addDays = n => { const d = new Date(); d.setDate(d.getDate() + n); return dayStr(d); };
+  const tomorrowMorning = () => { const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(6, 0, 0, 0); return d.getTime(); };
+  const dueFor = w => w === "today" ? today() : w === "week" ? addDays(6) : null;
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  function daysBetween(a, b){ return Math.round((new Date(b + "T12:00") - new Date(a + "T12:00")) / 864e5); }
+  function prettyDue(d){
+    const n = daysBetween(today(), d);
+    if (n === 0) return "today";
+    if (n === 1) return "tomorrow";
+    if (n < 0) return n === -1 ? "yesterday" : (-n) + " days ago";
+    return new Date(d + "T12:00").toLocaleDateString(undefined, { weekday: "long" });
+  }
+
+  // ---------- ranking ----------
+  const byId = id => S.tasks.find(t => t.id === id);
+  const eff = t => (t.parent && byId(t.parent)) || t;
+  function tier(t){
+    const e = eff(t), td = today();
+    if (e.due && e.due < td) return 0;
+    if (e.due === td) return 1;
+    if (e.due) return e.star ? 2 : 3;
+    return e.star ? 4 : 5;
+  }
+  const hasSteps = t => S.tasks.some(s => s.parent === t.id);
+  const isSnoozed = (t, now) => t.snooze && t.snooze > now;
+  function cmp(a, b){
+    return tier(a) - tier(b)
+      || (a.parent ? 0 : 1) - (b.parent ? 0 : 1)
+      || (eff(a).due || "9999").localeCompare(eff(b).due || "9999")
+      || a.created - b.created;
+  }
+  function queue(){
+    const now = Date.now();
+    return S.tasks.filter(t => !isSnoozed(t, now) && !hasSteps(t)).sort(cmp);
+  }
+
+  // ---------- storage ----------
+  function normalize(d){
+    const out = { tasks: Array.isArray(d && d.tasks) ? d.tasks.filter(t => t && t.id && t.t) : [], log: (d && typeof d.log === "object" && d.log) ? d.log : {} };
+    return out;
+  }
+  function pruneLog(){
+    const keys = Object.keys(S.log).sort();
+    while (keys.length > 30) delete S.log[keys.shift()];
+  }
+  function loadLocal(){ try { const r = localStorage.getItem(KEY); if (r) S = normalize(JSON.parse(r)); } catch (e) {} }
+  function saveLocal(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+  function save(){
+    pruneLog();
+    try { localStorage.setItem(KEY, JSON.stringify(S)); note(""); }
+    catch (e) { note("⚠︎ Couldn't save on this phone. Use Backup to keep a copy."); }
+    render();
+  }
+  function note(msg){ $("#status").textContent = msg; }
+  function mutate(fn, toastMsg){
+    const before = JSON.stringify(S);
+    fn();
+    if (toastMsg) showToast(toastMsg, before);
+    save();
+  }
+
+  // ---------- toast ----------
+  function showToast(msg, snap){
+    undoSnap = snap;
+    $("#toastUndo").hidden = !snap;
+    $("#toastMsg").textContent = msg;
+    $("#toast").hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { $("#toast").hidden = true; undoSnap = null; }, 5000);
+  }
+  $("#toastUndo").addEventListener("click", () => {
+    if (!undoSnap) return;
+    S = normalize(JSON.parse(undoSnap)); undoSnap = null;
+    $("#toast").hidden = true; save();
+  });
+
+  // ---------- actions ----------
+  function done(t){
+    mutate(() => {
+      S.tasks = S.tasks.filter(x => x.id !== t.id);
+      if (t.parent) { const p = byId(t.parent); if (p) p.stepsDone = (p.stepsDone || 0) + 1; }
+      const k = today(); S.log[k] = (S.log[k] || 0) + 1;
+    }, "Done. Nice.");
+  }
+  function later(t){
+    mutate(() => { const x = byId(t.id); x.snooze = tomorrowMorning(); x.skips = (x.skips || 0) + 1; }, "Moved to tomorrow.");
+  }
+  function nextWeek(t){
+    mutate(() => { const x = byId(t.id); x.due = addDays(6); x.when = "week"; x.skips = (x.skips || 0) + 1; }, "Pushed to next week.");
+  }
+  function letGo(t){
+    mutate(() => { S.tasks = S.tasks.filter(x => x.id !== t.id && x.parent !== t.id); }, "Let go.");
+  }
+  function addStep(parent, text){
+    mutate(() => { S.tasks.push({ id: uid(), t: text, parent: parent.id, created: Date.now() }); });
+  }
+
+  // ---------- render: the one card ----------
+  function el(tag, attrs, ...kids){
+    const n = document.createElement(tag);
+    for (const k in attrs || {}) {
+      if (k === "class") n.className = attrs[k];
+      else if (k.startsWith("on")) n.addEventListener(k.slice(2), attrs[k]);
+      else n.setAttribute(k, attrs[k]);
+    }
+    kids.flat().forEach(c => c != null && n.append(c.nodeType ? c : document.createTextNode(c)));
+    return n;
+  }
+
+  function reason(t){
+    const e = eff(t), tr = tier(t);
+    if (t.parent) return "Small first step. Finish this and the bigger task comes back.";
+    if (t.stepsDone) return "You've done " + t.stepsDone + " step" + (t.stepsDone > 1 ? "s" : "") + " of this already. Keep going, or take another small one.";
+    switch (tr) {
+      case 0: return "This slipped past its date (" + prettyDue(e.due) + "). Happens. Do it now, push it to next week, or let it go.";
+      case 1: return "Due today. Nothing else matters more right now.";
+      case 2: return "It matters to you and it's due " + prettyDue(e.due) + ".";
+      case 3: return "Due " + prettyDue(e.due) + ". Nothing more important is waiting.";
+      case 4: return "It matters to you. Nothing with a deadline is waiting, so this is the best use of now.";
+      default: return "Nothing urgent or important is waiting. Here's one from Someday.";
+    }
+  }
+
+  function renderCard(){
+    const main = $("#main"); main.textContent = "";
+    const q = queue();
+    const now = Date.now();
+    const snoozed = S.tasks.filter(t => isSnoozed(t, now));
+
+    if (!q.length) {
+      if (snoozed.length) {
+        main.append(el("div", { class: "card empty" },
+          el("p", { class: "eyebrow" }, "All clear for now"),
+          el("h2", { class: "title" }, "Everything left is parked until tomorrow."),
+          el("p", { class: "why" }, "Take the win, or bring them back if you've got energy."),
+          el("button", { type: "button", onclick: () => mutate(() => S.tasks.forEach(t => t.snooze = 0)) }, "Bring them back (" + snoozed.length + ")")
+        ));
+      } else {
+        main.append(el("div", { class: "card empty" },
+          el("p", { class: "eyebrow" }, "Nothing here yet"),
+          el("h2", { class: "title" }, "Empty your head into the box below."),
+          el("ol", null,
+            el("li", null, el("b", null, "Dump everything."), " One line each, no sorting needed."),
+            el("li", null, el("b", null, "Tag it fast."), " Today, This week or Someday. Star what really matters."),
+            el("li", null, el("b", null, "Open this when you're stuck."), " It shows you one thing. Do it, park it, or shrink it.")
+          )
+        ));
+      }
+      return;
+    }
+
+    const t = q[0], e = eff(t), tr = tier(t);
+    const parent = t.parent ? byId(t.parent) : null;
+    const slipped = tr === 0 && !t.parent;
+    const card = el("div", { class: "card" });
+
+    card.append(el("p", { class: "eyebrow" }, slipped ? "Decide on this one" : "Do this next", e.star ? el("span", { class: "star", "aria-label": "Matters" }, "★") : null));
+    card.append(el("h2", { class: "title" }, t.t));
+    if (parent) card.append(el("p", { class: "parent" }, "Part of: " + parent.t));
+    card.append(el("p", { class: "why" + (tr <= 1 ? " t" + tr : "") + (e.star && tr > 1 ? " star" : "") }, reason(t)));
+
+    if ((t.skips || 0) >= 3 && !slipped) {
+      card.append(el("p", { class: "nudge" }, "You've pushed this " + t.skips + " times. That usually means it's too big or doesn't matter. Shrink it, or let it go."));
+    }
+
+    if (stepFor === t.id) {
+      const inp = el("input", { type: "text", id: "stepText", placeholder: "e.g. Open the doc and write one line", enterkeyhint: "done" });
+      inp.value = stepDraft;
+      inp.addEventListener("input", () => stepDraft = inp.value);
+      const form = el("form", { class: "stepform", onsubmit: ev => {
+        ev.preventDefault(); const v = inp.value.trim(); if (!v) return;
+        stepFor = null; stepDraft = ""; addStep(t, v);
+      }},
+        el("label", { for: "stepText" }, "What's the smallest first bit? Something you could do in 5 minutes."),
+        el("div", { class: "row" }, inp, el("button", { type: "submit", class: "primary", style: "min-height:48px;font-size:16px" }, "Add")),
+        el("button", { type: "button", class: "linkish", onclick: () => { stepFor = null; stepDraft = ""; render(); } }, "Cancel")
+      );
+      card.append(form);
+      main.append(card);
+      setTimeout(() => inp.focus(), 0);
+      return;
+    }
+
+    const acts = el("div", { class: "actions" });
+    acts.append(el("button", { type: "button", class: "primary wide", onclick: () => done(t) }, "Done"));
+    if (slipped) {
+      acts.append(el("button", { type: "button", onclick: () => nextWeek(t) }, "Next week"));
+      acts.append(el("button", { type: "button", onclick: () => { stepFor = t.id; render(); } }, "Shrink it"));
+    } else {
+      acts.append(el("button", { type: "button", onclick: () => later(t) }, "Not today"));
+      acts.append(el("button", { type: "button", onclick: () => { stepFor = t.id; render(); } }, "Shrink it"));
+    }
+    acts.append(el("button", { type: "button", class: "linkish wide", onclick: () => letGo(t) }, "Let it go"));
+    card.append(acts);
+    main.append(card);
+  }
+
+  // ---------- render: the full list ----------
+  function renderAll(){
+    const box = $("#all"); box.textContent = "";
+    const n = S.tasks.length;
+    $("#toggleAll").textContent = showAll ? "Hide the full list" : (n ? "See everything (" + n + ")" : "See everything");
+    $("#toggleAll").setAttribute("aria-expanded", String(showAll));
+    $("#listWrap").hidden = n === 0;
+    box.hidden = !showAll;
+    if (!showAll) return;
+    const now = Date.now();
+    const groups = [["Overdue", t => tier(t) === 0], ["Today", t => tier(t) === 1], ["This week", t => tier(t) === 2 || tier(t) === 3], ["Someday", t => tier(t) >= 4]];
+    const sorted = S.tasks.slice().sort(cmp);
+    groups.forEach(([name, test]) => {
+      const items = sorted.filter(test);
+      if (!items.length) return;
+      box.append(el("p", { class: "group" }, name));
+      items.forEach(t => {
+        const sub = [];
+        if (t.parent && byId(t.parent)) sub.push("Step of: " + byId(t.parent).t);
+        if (isSnoozed(t, now)) sub.push("Parked until tomorrow");
+        if (hasSteps(t)) sub.push("Waiting on a smaller step");
+        const whenLabel = t.parent ? "Step" : (!t.due ? "Someday" : t.due < today() ? "Overdue" : t.due === today() ? "Today" : "This week");
+        box.append(el("div", { class: "item" },
+          t.parent ? el("span") : el("button", { type: "button", class: "icon", "aria-pressed": String(!!t.star), "aria-label": t.star ? "Unmark matters" : "Mark matters",
+            onclick: () => mutate(() => { byId(t.id).star = !t.star; }) }, t.star ? "★" : "☆"),
+          el("div", { class: "txt" }, t.t, sub.length ? el("small", null, sub.join(" · ")) : null),
+          t.parent ? el("span") : el("button", { type: "button", class: "chip" + (whenLabel === "Overdue" ? " late" : ""), "aria-label": "Change when: " + whenLabel,
+            onclick: () => mutate(() => {
+              const x = byId(t.id); const order = ["today", "week", "someday"];
+              const cur = !x.due ? "someday" : x.due <= today() ? "today" : "week";
+              x.when = order[(order.indexOf(cur) + 1) % 3]; x.due = dueFor(x.when); x.snooze = 0;
+            }) }, whenLabel),
+          el("button", { type: "button", class: "icon", "aria-label": "Delete " + t.t, onclick: () => letGo(t) }, "×")
+        ));
+      });
+    });
+  }
+
+  function renderTally(){
+    const n = S.log[today()] || 0;
+    const tally = $("#tally"); tally.textContent = "";
+    if (n) tally.append(el("b", null, n + " done"), " today");
+    else tally.textContent = new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "short" });
+  }
+
+  function render(){ renderCard(); renderAll(); renderTally(); }
+
+  // ---------- capture ----------
+  document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
+    capWhen = b.dataset.when;
+    document.querySelectorAll(".seg button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  }));
+  $("#capStar").addEventListener("click", () => {
+    capStar = !capStar;
+    $("#capStar").setAttribute("aria-pressed", String(capStar));
+    $("#capStar").textContent = (capStar ? "★" : "☆") + " Matters";
+  });
+  $("#cap").addEventListener("submit", ev => {
+    ev.preventDefault();
+    const v = $("#capText").value.trim(); if (!v) return;
+    mutate(() => S.tasks.push({ id: uid(), t: v, when: capWhen, due: dueFor(capWhen), star: capStar, created: Date.now() }));
+    $("#capText").value = "";
+    capStar = false; $("#capStar").setAttribute("aria-pressed", "false"); $("#capStar").textContent = "☆ Matters";
+    $("#capText").focus();
+  });
+  $("#toggleAll").addEventListener("click", () => { showAll = !showAll; renderAll(); });
+
+  // refresh for snoozes ending and the day rolling over (no writes)
+  setInterval(() => { if (!stepFor) render(); }, 60000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && !stepFor) render(); });
+
+  // ---------- backup ----------
+  const backupText = () => JSON.stringify({ app: "next-thing", v: 1, saved: new Date().toISOString(), ...S });
+  $("#backupBtn").addEventListener("click", () => {
+    const b = $("#backup"); b.hidden = !b.hidden;
+    $("#backupBtn").setAttribute("aria-expanded", String(!b.hidden));
+  });
+  $("#bkSave").addEventListener("click", async () => {
+    const name = "next-thing-backup-" + today() + ".json";
+    const blob = new Blob([backupText()], { type: "application/json" });
+    try {
+      const file = new File([blob], name, { type: "application/json" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: "Next Thing backup" }); return; }
+    } catch (e) { if (e && e.name === "AbortError") return; }
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  });
+  $("#bkCopy").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(backupText()); showToast("Backup copied. Paste it into Notes or an email to yourself.", null); }
+    catch (e) { $("#bkText").value = backupText(); $("#bkText").select(); showToast("Select-all and copy the text in the box.", null); }
+  });
+  function restore(raw){
+    try {
+      const d = JSON.parse(raw);
+      if (!d || !Array.isArray(d.tasks)) throw new Error("bad");
+      const before = JSON.stringify(S);
+      S = normalize(d); save();
+      showToast("Restored " + S.tasks.length + " tasks.", before);
+      $("#bkText").value = ""; $("#backup").hidden = true; $("#backupBtn").setAttribute("aria-expanded", "false");
+    } catch (e) { showToast("That doesn't look like a Next Thing backup.", null); }
+  }
+  $("#bkRestore").addEventListener("click", () => { const v = $("#bkText").value.trim(); if (v) restore(v); });
+  $("#bkFileBtn").addEventListener("click", () => $("#bkFile").click());
+  $("#bkFile").addEventListener("change", async ev => {
+    const f = ev.target.files && ev.target.files[0]; if (!f) return;
+    restore(await f.text()); ev.target.value = "";
+  });
+
+  // ---------- boot ----------
+  loadLocal(); render();
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  }
+  // keep the phone's copy fresh if the app is open in two places
+  window.addEventListener("storage", e => { if (e.key === KEY) { loadLocal(); if (!stepFor) render(); } });
+})();
+</script>
+</body>
+</html>
