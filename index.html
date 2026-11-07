@@ -161,6 +161,7 @@ input[type=text]:focus,textarea:focus{border-color:var(--pink);box-shadow:0 0 14
 .timer .tt{font-size:20px;font-weight:600;text-align:center;max-width:32ch;overflow-wrap:anywhere}
 .timer .lbl{font:600 12px var(--mono);letter-spacing:.2em;color:var(--cyan);text-transform:uppercase}
 .timer .btns{width:min(100%,420px)}
+.btns[hidden]{display:none}
 
 /* toast */
 .toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--surface2);border:1px solid var(--cyan);box-shadow:0 0 18px -6px var(--cyan);border-radius:12px;padding:6px 6px 6px 14px;display:flex;gap:8px;align-items:center;font-size:14px;z-index:50;width:max-content;max-width:calc(100% - 32px)}
@@ -212,10 +213,17 @@ input[type=text]:focus,textarea:focus{border-color:var(--pink);box-shadow:0 0 14
   <div class="lbl" id="tLbl">Focus</div>
   <div class="ring" id="ring"><div class="tm" id="tTime">25:00</div></div>
   <div class="tt" id="tTitle"></div>
-  <div class="btns">
+  <div class="btns" id="tRun">
     <button class="btn cyan" data-act="tpause" id="tPause">Pause</button>
     <button class="btn primary" data-act="tdone">Task done</button>
     <button class="btn" data-act="tstop">Stop</button>
+  </div>
+  <div class="btns" id="tAsk" hidden>
+    <p class="hint" style="width:100%;text-align:center;font-size:15px;color:var(--ink)">Did you finish it?</p>
+    <button class="btn primary" data-act="tq" data-v="done">Yes, it's done</button>
+    <button class="btn cyan" data-act="tq" data-v="doing">Not yet (keep in Doing)</button>
+    <button class="btn" data-act="tq" data-v="todo">Move back to To do</button>
+    <button class="btn" data-act="tq" data-v="resume" style="flex-basis:100%">Keep the timer going</button>
   </div>
 </div>
 
@@ -539,6 +547,7 @@ input[type=text]:focus,textarea:focus{border-color:var(--pink);box-shadow:0 0 14
     const t = byId(T.id);
     $("#tTitle").textContent = t ? t.t : "";
     $("#timer").hidden = false;
+    $("#tAsk").hidden = !T.asking; $("#tRun").hidden = !!T.asking;
     tickTimer(); clearInterval(tTick); tTick = setInterval(tickTimer, 500);
   }
   function tickTimer(){
@@ -552,9 +561,9 @@ input[type=text]:focus,textarea:focus{border-color:var(--pink);box-shadow:0 0 14
       $("#tLbl").textContent = "Time's up. Done, or keep going?";
       $("#tPause").textContent = "+5 min";
       if (!T.buzzed) { T.buzzed = true; saveTimer(); try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {} }
-    } else $("#tLbl").textContent = T.paused ? "Paused" : "Focus";
+    } else $("#tLbl").textContent = T.asking ? "Stopped" : T.paused ? "Paused" : "Focus";
   }
-  function endTimer(){ T = null; saveTimer(); clearInterval(tTick); $("#timer").hidden = true; }
+  function endTimer(){ T = null; saveTimer(); clearInterval(tTick); $("#timer").hidden = true; $("#tAsk").hidden = true; $("#tRun").hidden = false; }
 
   // ---------- backup ----------
   const backupText = () => JSON.stringify({ app: "next-thing", v: 2, saved: new Date().toISOString(), ...S });
@@ -644,7 +653,24 @@ input[type=text]:focus,textarea:focus{border-color:var(--pink);box-shadow:0 0 14
         else { T.left = Math.max(0, T.end - Date.now()); T.paused = true; }
         saveTimer(); tickTimer(); break;
       case "tdone": { const tid = T && T.id; endTimer(); if (tid && byId(tid)) setStatus(tid, "done"); break; }
-      case "tstop": endTimer(); break;
+      case "tstop":
+        if (!T) break;
+        if (!T.paused) { T.left = Math.max(0, T.end - Date.now()); T.paused = true; T.asking = true; } else T.asking = true;
+        saveTimer(); tickTimer(); $("#tRun").hidden = true; $("#tAsk").hidden = false; break;
+      case "tq": {
+        const v = b.dataset.v, tid = T && T.id;
+        if (v === "resume") {
+          if (T) { T.asking = false; if (T.left > 0) { T.end = Date.now() + T.left; T.paused = false; } saveTimer(); }
+          $("#tAsk").hidden = true; $("#tRun").hidden = false; tickTimer(); break;
+        }
+        endTimer();
+        if (tid && byId(tid)) {
+          if (v === "done") setStatus(tid, "done");
+          else if (v === "todo") { setStatus(tid, "todo"); tab = "todo"; renderBoard(); toast("Moved back to To do.", null); }
+          else { tab = "doing"; renderBoard(); toast("Still in Doing. Pick it up when you're ready.", null); }
+        }
+        break;
+      }
       case "bksave": bkSave(); break;
       case "bkcopy":
         navigator.clipboard.writeText(backupText()).then(() => toast("Backup copied. Paste it into Notes or an email to yourself.", null))
